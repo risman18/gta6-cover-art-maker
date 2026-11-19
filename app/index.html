@@ -3,21 +3,152 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cover Snap</title>
-<link rel="stylesheet" href="./style.css">
+<title>Cover Drive — GTA 6-style Cover Art Maker</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="app">
-  <section class="controls">
-    <h1>Cover Snap</h1>
-    <p>A photo and a caption, made into a square cover.</p>
-    <label>Photo <input id="photo" type="file" accept="image/*"></label>
-    <label>Caption <input id="caption" type="text" maxlength="40" value="Sunset Heist"></label>
-    <button id="export" type="button">Export PNG 1080 x 1080</button>
-    <p id="status" role="status"></p>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">CD</span>
+    <span class="brand-name">COVER DRIVE</span>
+    <span class="brand-tag">GTA 6-style cover art maker</span>
+  </div>
+  <ol class="steps" aria-label="Steps">
+    <li data-step="1" class="done"><b>1</b> Add photo</li>
+    <li data-step="2"><b>2</b> Pick layout</li>
+    <li data-step="3"><b>3</b> Caption &amp; grade</li>
+    <li data-step="4"><b>4</b> Export PNG</li>
+  </ol>
+</header>
+
+<main class="workspace">
+  <section class="preview-col" aria-label="Live preview">
+    <div class="preview-frame">
+      <canvas id="preview" width="1080" height="1080"></canvas>
+      <p class="preview-hint">Drag on a panel to move its photo &middot; your photos never leave this machine</p>
+    </div>
+    <div class="export-row">
+      <div class="size-group" role="group" aria-label="Export size">
+        <button class="size-btn is-active" data-size="1080x1080">1080 &times; 1080</button>
+        <button class="size-btn" data-size="1080x1350">1080 &times; 1350</button>
+        <button class="size-btn" data-size="1920x1080">1920 &times; 1080</button>
+      </div>
+      <button id="exportBtn" class="export-btn">Export PNG</button>
+    </div>
+    <p id="exportStatus" class="export-status" role="status"></p>
   </section>
-  <canvas id="cover" width="1080" height="1080" aria-label="The cover"></canvas>
+
+  <aside class="controls" aria-label="Editor controls">
+    <section class="panel-block" id="photosBlock">
+      <h2>Photos</h2>
+      <p class="hint">Upload your own, or use a sample. Photos are read on your machine and never uploaded.</p>
+      <div class="upload-row">
+        <label class="upload-btn">Upload photo 1
+          <input type="file" id="upload1" accept="image/*" hidden>
+        </label>
+        <label class="upload-btn">Upload photo 2
+          <input type="file" id="upload2" accept="image/*" hidden>
+        </label>
+      </div>
+      <div class="sample-row" id="sampleRow">
+        <button class="sample-btn" data-sample="boulevard" type="button">
+          <img src="samples/boulevard.jpg" alt="Sample photo: boulevard at dusk">
+          <span>Boulevard</span>
+        </button>
+        <button class="sample-btn" data-sample="pier" type="button">
+          <img src="samples/pier.jpg" alt="Sample photo: pier at sunset">
+          <span>Pier</span>
+        </button>
+      </div>
+      <p class="hint" id="uploadStatus">Samples loaded: Boulevard + Pier.</p>
+    </section>
+
+    <section class="panel-block" id="layoutBlock">
+      <h2>Layout</h2>
+      <div class="layout-row" id="layoutRow">
+        <button class="layout-btn is-active" data-layout="triptych" type="button">
+          <span class="layout-thumb layout-thumb-triptych" aria-hidden="true"></span>
+          Triptych
+        </button>
+        <button class="layout-btn" data-layout="split" type="button">
+          <span class="layout-thumb layout-thumb-split" aria-hidden="true"></span>
+          Split
+        </button>
+        <button class="layout-btn" data-layout="hero" type="button">
+          <span class="layout-thumb layout-thumb-hero" aria-hidden="true"></span>
+          Hero + strip
+        </button>
+      </div>
+      <div class="panel-tabs" id="panelTabs" role="tablist" aria-label="Panels"></div>
+      <div class="panel-editor" id="panelEditor">
+        <label>Photo in this panel
+          <select id="panelPhoto"></select>
+        </label>
+        <label>Zoom <span class="value" id="zoomValue">100%</span>
+          <input type="range" id="panelZoom" min="100" max="260" value="100">
+        </label>
+        <label>Move left / right <span class="value" id="panXValue">0</span>
+          <input type="range" id="panelPanX" min="-100" max="100" value="0">
+        </label>
+        <label>Move up / down <span class="value" id="panYValue">0</span>
+          <input type="range" id="panelPanY" min="-100" max="100" value="0">
+        </label>
+      </div>
+    </section>
+
+    <section class="panel-block" id="captionBlock">
+      <h2>Caption</h2>
+      <label>Title
+        <input type="text" id="titleInput" value="SUNSET DRIVE" maxlength="24">
+      </label>
+      <label>Subtitle
+        <input type="text" id="subtitleInput" value="One last ride down Ocean Drive" maxlength="60">
+      </label>
+      <label>Title size <span class="value" id="titleSizeValue">100%</span>
+        <input type="range" id="titleSize" min="60" max="150" value="100">
+      </label>
+      <div class="caption-row">
+        <label>Caption position
+          <select id="captionPos">
+            <option value="bottom" selected>Bottom</option>
+            <option value="top">Top</option>
+          </select>
+        </label>
+        <label>Lettering
+          <select id="captionStyle">
+            <option value="sunset" selected>Sunset outline</option>
+            <option value="neon">Neon glow</option>
+            <option value="solid">Solid white</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel-block" id="gradeBlock">
+      <h2>Colour grade</h2>
+      <div class="grade-row" id="gradeRow">
+        <button class="grade-btn is-active" data-grade="sunset" type="button">
+          <span class="grade-swatch grade-swatch-sunset" aria-hidden="true"></span>
+          Vice Sunset
+        </button>
+        <button class="grade-btn" data-grade="neon" type="button">
+          <span class="grade-swatch grade-swatch-neon" aria-hidden="true"></span>
+          Neon Nights
+        </button>
+        <button class="grade-btn" data-grade="gold" type="button">
+          <span class="grade-swatch grade-swatch-gold" aria-hidden="true"></span>
+          Golden Hour
+        </button>
+      </div>
+      <p class="hint">Grades are drawn on the canvas as light and colour — no photo is ever uploaded or changed on disk.</p>
+    </section>
+  </aside>
 </main>
-<script type="module" src="./src/main.js"></script>
+
+<footer class="footnote">
+  <p>Cover Drive makes original poster-style art in the spirit of GTA 6 covers. It uses no Rockstar logo, artwork or font. Title font: Anton (SIL Open Font License), shipped under <code>app/fonts/</code>.</p>
+</footer>
+
+<script type="module" src="src/main.js"></script>
 </body>
 </html>
